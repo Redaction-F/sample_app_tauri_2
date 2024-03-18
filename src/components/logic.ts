@@ -68,7 +68,6 @@ const onClickNumber = (buttonNumber: number, number: number, setNumber: (number:
   invoke<DisplayCondiitonNumber>("on_click_number", {buttonNumber: buttonNumber, number: number, condition: condition}).then(r => {
     condition = r.condition;
     setNumber(r.number);
-    console.log(r.number);
   });
 };
 

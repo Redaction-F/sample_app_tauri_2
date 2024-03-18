@@ -87,9 +87,9 @@ pub fn on_click_operator(operator: Operator, number: f64, condition: Condition) 
         condition.check_second = true;
         match condition.previous_operator {
             Operator::Plus => number += condition.second_number, 
-            Operator::Minus => number -= condition.second_number, 
+            Operator::Minus => number = condition.second_number - number, 
             Operator::Multiplication => number *= condition.second_number, 
-            Operator::Division => number /= condition.second_number, 
+            Operator::Division => number = condition.second_number / number, 
             _ => {
                 condition.second_number = number;
                 condition.check_second = false;
