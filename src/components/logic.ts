@@ -25,71 +25,27 @@ export type ButtonsProps = {
 
 const operator_list: Operator[] = ["Plus", "Minus", "Multiplication", "Division", "Equal", "None"];
 
-class DisplayCondiiton {
-  second_number: number; 
-  check_second: boolean; 
-  previous_operator: Operator; 
-  check_operator: boolean; 
-  check_equal: boolean; 
-  point: number;
-
-  constructor() {
-    this.second_number = 0;
-    this.check_second = false;
-    this.previous_operator = "None";
-    this.check_operator = false;
-    this.check_equal = false;
-    this.point = 0;
-  };
-
-  clear() {
-    this.second_number = 0;
-    this.check_second = false;
-    this.previous_operator = "None";
-    this.check_operator = false;
-    this.check_equal = false;
-    this.point = 0;
-  };
-};
-
-class DisplayCondiitonNumber {
-  condition: DisplayCondiiton;
-  number: number;
-
-  constructor() {
-    this.condition = new DisplayCondiiton;
-    this.number = 0;
-  }
-}
-
-let condition: DisplayCondiiton = new DisplayCondiiton;
-
 const onClickNumber = (buttonNumber: number, number: number, setNumber: (number: number) => void) => {
-  invoke<DisplayCondiitonNumber>("on_click_number", {buttonNumber: buttonNumber, number: number, condition: condition}).then(r => {
-    condition = r.condition;
-    setNumber(r.number);
+  invoke<number>("on_click_number", {buttonNumber: buttonNumber, number: number}).then(rNumber => {
+    setNumber(rNumber);
   });
 };
 
 const onClickClear = (setNumber: (number: number) => void) => {
-  invoke<DisplayCondiitonNumber>("on_click_clear").then(r => {
-    condition = r.condition;
-    setNumber(r.number);
+  invoke<number>("on_click_clear").then(rNumber => {
+    setNumber(rNumber);
   });
 };
 
 
 const onClickOperator = (operator: Operator, number: number, setNumber: (number: number) => void) => {
-  invoke<DisplayCondiitonNumber>("on_click_operator", {operator: operator, number: number, condition: condition}).then(r => {
-    condition = r.condition;
-    setNumber(r.number);
+  invoke<number>("on_click_operator", {operator: operator, number: number}).then(rNumber => {
+    setNumber(rNumber);
   });
 };
 
 const onClickPoint = () => {
-  invoke<DisplayCondiiton>("on_click_point", {condition: condition}).then(c => {
-    condition = c;
-  });
+  invoke("on_click_point");
 };
 
 const parseOperator = (operator: Operator) => {
@@ -108,4 +64,6 @@ const parseOperator = (operator: Operator) => {
   return operatorReturn;
 };
 
-export {onClickNumber, onClickOperator, onClickClear, onClickPoint, parseOperator, operator_list, condition};
+document.addEventListener("DOMContentLoaded", () => { invoke("start_up") });
+
+export {onClickNumber, onClickOperator, onClickClear, onClickPoint, parseOperator, operator_list};

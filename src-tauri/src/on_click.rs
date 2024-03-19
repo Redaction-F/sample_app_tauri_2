@@ -1,3 +1,5 @@
+use std::{fs::{self, File}, io::Write, path::Path};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -22,6 +24,38 @@ impl Condition {
         }
     }
 
+    fn from_json() -> Result<Condition, String> {
+        let condition_string: String = match fs::read_to_string("data/condition.json") {
+            Ok(o_) => o_, 
+            Err(e_) => {
+                println!("{}", e_.to_string());
+                return Err(e_.to_string())
+            }
+        };
+        match serde_json::from_str::<Condition>(&condition_string) {
+            Ok(o_) => Ok(o_), 
+            Err(e_) => {
+                println!("{}", e_.to_string());
+                Err(e_.to_string())
+            }
+        }
+    }
+
+    fn to_json(&self) -> Result<(), String> {
+        let condition_string: String = match serde_json::to_string(self) {
+            Ok(o_) => o_, 
+            Err(e_) => return Err(e_.to_string())
+        };
+        let mut file: File = match File::create("data/condition.json") {
+            Ok(o_) => o_, 
+            Err(e_) => return Err(e_.to_string())
+        };
+        match file.write_all(condition_string.as_bytes()) {
+            Ok(o_) => Ok(o_), 
+            Err(e_) => Err(e_.to_string())
+        }
+    }
+
     fn clear(&mut self) {
         self.second_number = 0.0;
         self.check_second = false;
@@ -42,47 +76,45 @@ pub enum Operator {
     None
 }
 
-#[derive(Serialize)]
-pub struct ConditionNumber {
-    condition: Condition, 
-    number: f64
-}
-
 #[tauri::command]
-pub fn on_click_number(button_number: u32, number: f64, condition: Condition) -> ConditionNumber {
+pub fn on_click_number(button_number: u32, number: f64) -> Result<f64, String> {
     let mut number: f64 = number;
-    let mut condition: Condition = condition;
+    let mut condition: Condition = Condition::from_json()?;
     if condition.check_equal {
         condition.clear();
         number = button_number as f64;
+        if condition.check_second {
+          condition.second_number = number;
+          condition.check_second = false;
+        };
     } else if condition.check_operator {
         condition.point = 0;
         condition.check_operator = false;
         number = button_number as f64;
+        if condition.check_second {
+          condition.second_number = number;
+          condition.check_second = false;
+        };
     } else if condition.point == 0 {
         number = (number * 10.0) + (button_number as f64);
     } else {
         number = number + (button_number as f64 / (10u32.pow(condition.point) as f64));
         condition.point += 1;
     };
-    ConditionNumber { 
-        condition: condition, 
-        number: number 
-    }
+    condition.to_json()?;
+    Ok(number)
 }
 
 #[tauri::command]
-pub fn on_click_clear() -> ConditionNumber {
-    ConditionNumber { 
-        condition: Condition::new(), 
-        number: 0.0
-    }
+pub fn on_click_clear() -> Result<f64, String> {
+    Condition::new().to_json()?;
+    Ok(0.0)
 }
 
 #[tauri::command]
-pub fn on_click_operator(operator: Operator, number: f64, condition: Condition) -> ConditionNumber {
+pub fn on_click_operator(operator: Operator, number: f64) -> Result<f64, String> {
     let mut number: f64 = number;
-    let mut condition: Condition = condition;
+    let mut condition: Condition = Condition::from_json()?;
     if !condition.check_operator {
         condition.check_second = true;
         match condition.previous_operator {
@@ -103,17 +135,42 @@ pub fn on_click_operator(operator: Operator, number: f64, condition: Condition) 
     };
     condition.check_operator = true;
     condition.previous_operator = operator;
-    ConditionNumber { 
-        condition: condition, 
-        number: number 
-    }
+    condition.to_json()?;
+    Ok(number)
 }
 
 #[tauri::command]
-pub fn on_click_point(condition: Condition) -> Condition {
-    let mut condition: Condition = condition;
+pub fn on_click_point() -> Result<(), String> {
+    let mut condition: Condition = Condition::from_json()?;
     if condition.point == 0 {
         condition.point = 1;
     };
-    condition
+    condition.to_json()?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn start_up() -> Result<(), String> {
+    let path: &Path = Path::new("data");
+    if !path.is_dir() {
+        if let Err(e_) = fs::create_dir(path) {
+            return Err(e_.to_string())
+        };
+    };
+    println!("Check!!");
+    let mut file: File = match File::create("data/condition.json") {
+        Ok(o_) => o_, 
+        Err(e_) => {
+            println!("{}", e_.to_string());
+            return Err(e_.to_string())
+        }
+    };
+    let condition_string: String = match serde_json::to_string(&Condition::new()) {
+        Ok(o_) => o_, 
+        Err(e_) => return Err(e_.to_string())
+    };
+    match file.write_all(condition_string.as_bytes()) {
+        Ok(o_) => Ok(o_), 
+        Err(e_) => Err(e_.to_string())
+    }
 }
