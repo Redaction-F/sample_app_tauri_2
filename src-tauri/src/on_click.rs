@@ -157,7 +157,6 @@ pub fn start_up() -> Result<(), String> {
             return Err(e_.to_string())
         };
     };
-    println!("Check!!");
     let mut file: File = match File::create("data/condition.json") {
         Ok(o_) => o_, 
         Err(e_) => {
